@@ -133,8 +133,8 @@ setup(
     version=VERSION,
     description="""AI Course Creator App by Blend-ed""",
     long_description=README + '\n\n' + CHANGELOG,
-    author='Blend-ed',
-    author_email='eng@blend-ed.com',
+    author='Rabeeh T A',
+    author_email='rabeeh@blend-ed.com',
     url='https://github.com/Blend-ed/blendxcoursecreator',
     packages=find_packages(
         include=['blendxcoursecreator', 'blendxcoursecreator.*'],
@@ -150,12 +150,12 @@ setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Framework :: Django',
-        'Framework :: Django :: 4.2',
-        'Framework :: Django :: 5.2',
+        'Framework :: Django :: 3.2',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.11',
     ],
 )
