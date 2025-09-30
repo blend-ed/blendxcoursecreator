@@ -14,7 +14,7 @@ from rest_framework import permissions
 class SchemaGenerator(OpenAPISchemaGenerator):
     def get_schema(self, request=None, public=False):
         schema = super(SchemaGenerator, self).get_schema(request, public)
-        schema.basePath = os.path.join(schema.basePath, 'blendxapi/')
+        schema.basePath = os.path.join(schema.basePath, 'blendxcoursecreator/')
         return schema
 schema_view = get_schema_view(
     openapi.Info(
