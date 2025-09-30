@@ -22,7 +22,7 @@ class BlendxcoursecreatorConfig(AppConfig):
         PluginURLs.CONFIG: {
             ProjectType.CMS: {
                 PluginURLs.NAMESPACE: name,
-                PluginURLs.REGEX: "^blendxcoursecreator",
+                PluginURLs.REGEX: "^blendxcoursecreator/",
                 PluginURLs.RELATIVE_PATH: "urls",
             }
         },

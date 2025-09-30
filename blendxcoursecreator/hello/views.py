@@ -11,7 +11,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
-@view_auth_classes(is_authenticated=True)
+@view_auth_classes(is_authenticated=False)
 class HelloView(APIView):
     """
     Test view for checking if the API is working.
