@@ -4,6 +4,7 @@ URLs for blendxcoursecreator.
 import os
 from django.urls import re_path, include , path # pylint: disable=unused-import
 from .hello import urls as hello_urls
+from .upload_course import urls as upload_course_urls
 from django.conf import settings
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -38,4 +39,5 @@ if settings.DEBUG:
 
 urlpatterns += [
     path("hello/", include(hello_urls)),
+    path("webhook/", include(upload_course_urls)),
 ]
