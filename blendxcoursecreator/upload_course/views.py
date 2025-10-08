@@ -17,8 +17,9 @@ import uuid
 from .utils import import_course_from_path
 
 log = logging.getLogger(__name__)
+from django.conf import settings
 
-BLENDX_AICC_KEY = "blendx_4_1ap4_GXDEbkIuPOvOqa6nIYnSH-oRnvjVUSSzpIZVlw" # api_key for blendx_ai_cc
+BLENDX_AICC_KEY = settings.BLENDX_AICC_KEY # api_key for blendx_ai_cc
 
 
 @view_auth_classes(is_authenticated=False)
