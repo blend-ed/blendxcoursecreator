@@ -13,7 +13,6 @@ import os
 from django.conf import settings
 from django.contrib.auth.models import User
 import json
-import uuid
 from .utils import import_course_from_path
 
 log = logging.getLogger(__name__)
@@ -80,22 +79,30 @@ class UploadCourseView(APIView):
 
             uploaded = request.FILES.get("course_file") or request.FILES.get("file")
             user_email = data_node.get("user_email") or request.data.get("user_email")
-            org = data_node.get("org") or data_node.get("org_name") or request.data.get("org")
-            if isinstance(org, str):
-                org = org.replace(" ", "_")
+            course_key = data_node.get("course_key")
 
             if not uploaded:
                 return Response(status=status.HTTP_400_BAD_REQUEST, data={"error": "Missing 'course_file'"})
-            if not user_email or not org:
-                return Response(status=status.HTTP_400_BAD_REQUEST, data={"error": "Missing required fields in payload: user_email, org/org_name"})
+            if not user_email or not course_key:
+                return Response(status=status.HTTP_400_BAD_REQUEST, data={"error": "Missing required fields in payload: user_email, course_key"})
+
+            # Parse course_key to extract org, number, and run
+            # Expected format: course-v1:{org}+{number}+{run}
+            try:
+                if not course_key.startswith("course-v1:"):
+                    return Response(status=status.HTTP_400_BAD_REQUEST, data={"error": "Invalid course_key format. Expected: course-v1:{org}+{number}+{run}"})
+                
+                course_key_parts = course_key.replace("course-v1:", "").split("+")
+                if len(course_key_parts) != 3:
+                    return Response(status=status.HTTP_400_BAD_REQUEST, data={"error": "Invalid course_key format. Expected: course-v1:{org}+{number}+{run}"})
+                
+                org, number, run = course_key_parts
+            except Exception as e:
+                return Response(status=status.HTTP_400_BAD_REQUEST, data={"error": f"Failed to parse course_key: {str(e)}"})
 
             filename = getattr(uploaded, "name", None) or "uploaded.tar.gz"
             if not filename.endswith(".tar.gz"):
                 return Response(status=status.HTTP_400_BAD_REQUEST, data={"error": "File must be a .tar.gz"})
-
-            # Generate unique course number and run instead of parsing filename
-            number = uuid.uuid4().hex[:8]
-            run = uuid.uuid4().hex[:6]
 
             exports_dir = "course_exports"
             os.makedirs(exports_dir, exist_ok=True)
