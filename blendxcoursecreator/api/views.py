@@ -26,6 +26,8 @@ from blendxcoursecreator.api.utils import (
     get_supported_file_types
 )
 
+log = logging.getLogger(__name__)
+
 @view_auth_classes(is_authenticated=True)
 class AttachmentView(APIView):
     """
