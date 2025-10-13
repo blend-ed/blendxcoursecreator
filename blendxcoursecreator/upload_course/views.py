@@ -18,8 +18,6 @@ from .utils import import_course_from_path
 log = logging.getLogger(__name__)
 from django.conf import settings
 
-BLENDX_AICC_KEY = settings.BLENDX_AICC_KEY # api_key for blendx_ai_cc
-
 
 @view_auth_classes(is_authenticated=False)
 class UploadCourseView(APIView):
@@ -44,6 +42,9 @@ class UploadCourseView(APIView):
         """
         Receive .tar.gz file and import as a course, or handle webhook test JSON.
         """
+        # api_key for blendx_ai_cc
+        BLENDX_AICC_KEY = settings.BLENDX_AICC_KEY
+
         try:
             # Handle pure JSON test webhook: event=webhook.test
             content_type = request.META.get("CONTENT_TYPE", "")
