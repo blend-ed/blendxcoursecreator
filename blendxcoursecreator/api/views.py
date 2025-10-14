@@ -652,10 +652,31 @@ class AICourseListView(APIView):
             except Exception as e:
                 log.warning(f"Could not sort by {order_field}: {e}")
             
+            # Process each course to add attachment_count and rename created_at to created
+            processed_courses = []
+            for course in filtered_courses:
+                # Create a copy of the course to avoid modifying the original
+                processed_course = course.copy()
+                
+                # Add attachment_count based on attachment_path
+                attachment_path = course.get('attachment_path', '')
+                if attachment_path and attachment_path.strip():
+                    # Count comma-separated values, filtering out empty strings
+                    attachment_count = len([path.strip() for path in attachment_path.split(',') if path.strip()])
+                else:
+                    attachment_count = 0
+                processed_course['attachment_count'] = attachment_count
+                
+                # Rename created_at to created
+                if 'created_at' in processed_course:
+                    processed_course['created'] = processed_course.pop('created_at')
+                
+                processed_courses.append(processed_course)
+            
             # Build response matching original API format
             response_data = {
-                'courses': filtered_courses,
-                'total': len(filtered_courses)
+                'courses': processed_courses,
+                'total': len(processed_courses)
             }
             
             return Response(response_data, status=status.HTTP_200_OK)
