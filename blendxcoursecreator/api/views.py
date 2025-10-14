@@ -1,5 +1,6 @@
 import logging
 import json
+import requests
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 
@@ -25,9 +26,9 @@ from blendxcoursecreator.api.utils import (
     validate_file_type,
     get_supported_file_types
 )
-
+from django.contrib.auth.models import User
 log = logging.getLogger(__name__)
-
+# Attachment Views
 @view_auth_classes(is_authenticated=True)
 class AttachmentView(APIView):
     """
@@ -377,5 +378,420 @@ class AttachmentBulkDeleteView(APIView):
             log.error(f"Error in bulk delete: {e}")
             return Response(
                 data={"message": str(e), "status": "failed"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+## Course Creator View
+@view_auth_classes(is_authenticated=True)
+class CourseCreatorView(APIView):
+    """
+    API endpoint for course creator.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @schema(
+        body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "topic": openapi.Schema(type=openapi.TYPE_STRING),
+                "instructions": openapi.Schema(type=openapi.TYPE_STRING),
+                "course_structure": openapi.Schema(type=openapi.TYPE_OBJECT),
+                "action": openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    enum=["create_structure", "create_content", "update_structure"]
+                ),
+                "course_size": openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    enum=["small", "medium", "large", "ai-generated"]
+                ),
+                "attachment_path": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(type=openapi.TYPE_STRING)
+                ),
+                "available_components": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(type=openapi.TYPE_STRING)
+                ),
+                "audience": openapi.Schema(type=openapi.TYPE_STRING),
+                "target_language": openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    enum=["en", "es", "fr", "de", "hi", "ml", "ar", "he", "fa", "ur"]
+                ),
+                "org": openapi.Schema(type=openapi.TYPE_STRING)
+            },
+            required=["action", "topic"]
+        ),
+        responses={
+            200: openapi.Response(description="Success"),
+            400: openapi.Response(description="Invalid request"),
+            500: openapi.Response(description="Server error"),
+        }
+    )
+    def post(self, request):
+        """
+        Forward course creation request to external AICC API.
+        
+        Supports three actions:
+        - create_structure: Generate course structure
+        - create_content: Generate course content
+        - update_structure: Update existing course structure
+        """
+        try:
+            API_KEY = settings.BLENDX_AICC_KEY
+            API_URL = settings.BLENDX_AICC_APP_URL
+            MEDIA_URL = settings.LMS_ROOT_URL
+            user_email = User.objects.get(id=request.user.id).email
+            
+            # Get request data
+            request_data = request.data.copy()
+            
+            # Add user email to the request data
+            request_data['user_email'] = user_email
+            
+            # Transform attachment_paths by prepending MEDIA_URL/media/
+            if 'attachment_paths' in request_data and request_data['attachment_paths']:
+                transformed_paths = []
+                for path in request_data['attachment_paths']:
+                    # Construct full URL: {MEDIA_URL}/media/{filepath}
+                    full_url = f"{MEDIA_URL}/media/{path}"
+                    transformed_paths.append(full_url)
+                request_data['attachment_paths'] = transformed_paths
+                log.info(f"Transformed attachment_paths: {transformed_paths}")
+            
+            # Prepare headers for external API
+            headers = {
+                'accept': 'application/json',
+                'X-API-Key': API_KEY,
+                'Content-Type': 'application/json'
+            }
+            
+            # Make POST request to external API
+            external_api_url = f"{API_URL}/api/v1/courses/create"
+            
+            log.info(f"Forwarding request to external API: {external_api_url}")
+            
+            response = requests.post(
+                external_api_url,
+                headers=headers,
+                json=request_data,
+                timeout=300  # 5 minutes timeout for AI operations
+            )
+            
+            # Return the response from external API
+            return Response(
+                response.json() if response.content else {},
+                status=response.status_code
+            )
+            
+        except User.DoesNotExist:
+            log.error(f"User with id {request.user.id} not found")
+            return Response(
+                {"error": "User not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except requests.exceptions.Timeout:
+            log.error("External API request timed out")
+            return Response(
+                {"error": "Request to external API timed out"},
+                status=status.HTTP_504_GATEWAY_TIMEOUT
+            )
+        except requests.exceptions.RequestException as e:
+            log.error(f"Error calling external API: {str(e)}")
+            return Response(
+                {"error": f"Failed to connect to external API: {str(e)}"},
+                status=status.HTTP_502_BAD_GATEWAY
+            )
+        except Exception as e:
+            log.error(f"Unexpected error in CourseCreatorView: {str(e)}")
+            return Response(
+                {"error": f"Internal server error: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+## AI Course List View
+@view_auth_classes(is_authenticated=True)
+class AICourseListView(APIView):
+    """
+    API endpoint for listing AI courses.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @schema(
+        parameters=[
+            openapi.Parameter(
+                'status',
+                openapi.IN_QUERY,
+                description="Filter by status (pending, processing, success, failed)",
+                type=openapi.TYPE_STRING,
+                enum=['pending', 'processing', 'success', 'failed']
+            ),
+            openapi.Parameter(
+                'action',
+                openapi.IN_QUERY,
+                description="Filter by action type (create_structure, create_content, update_structure)",
+                type=openapi.TYPE_STRING,
+                enum=['create_structure', 'create_content', 'update_structure']
+            ),
+            openapi.Parameter(
+                'course_size',
+                openapi.IN_QUERY,
+                description="Filter by course size (small, medium, large, ai-generated)",
+                type=openapi.TYPE_STRING,
+                enum=['small', 'medium', 'large', 'ai-generated']
+            ),
+            openapi.Parameter(
+                'search',
+                openapi.IN_QUERY,
+                description="Search in topic and instructions",
+                type=openapi.TYPE_STRING
+            ),
+            openapi.Parameter(
+                'ordering',
+                openapi.IN_QUERY,
+                description="Order by field (created_at, topic, status). Prefix with - for descending",
+                type=openapi.TYPE_STRING,
+                default='-created_at'
+            )
+        ],
+        responses={
+            200: openapi.Response(
+                description="List of AI courses",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'courses': openapi.Schema(
+                            type=openapi.TYPE_ARRAY,
+                            items=openapi.Schema(type=openapi.TYPE_OBJECT)
+                        ),
+                        'total': openapi.Schema(type=openapi.TYPE_INTEGER)
+                    }
+                )
+            ),
+            400: openapi.Response(description="Invalid request parameters"),
+            500: openapi.Response(description="Server error"),
+        }
+    )
+    def get(self, request):
+        """
+        List AI courses from external AICC API with server-side filtering.
+        
+        Query Parameters:
+        - status: Filter by course status
+        - action: Filter by action type
+        - course_size: Filter by course size
+        - search: Search in topic and instructions
+        - ordering: Order by field, prefix with - for descending (default: -created_at)
+        """
+        try:
+            API_KEY = settings.BLENDX_AICC_KEY
+            API_URL = settings.BLENDX_AICC_APP_URL
+            
+            # Prepare headers for external API
+            headers = {
+                'accept': 'application/json',
+                'X-API-Key': API_KEY,
+            }
+            
+            # Fetch all courses from external API with limit=1000
+            external_api_url = f"{API_URL}/api/v1/courses"
+            params = {
+                'limit': 1000,
+                'offset': 0
+            }
+            
+            log.info(f"Fetching all courses from external API: {external_api_url}")
+            
+            response = requests.get(
+                external_api_url,
+                headers=headers,
+                params=params,
+                timeout=60  # 1 minute timeout for listing
+            )
+            
+            if response.status_code != 200:
+                return Response(
+                    response.json() if response.content else {},
+                    status=response.status_code
+                )
+            
+            # Parse response
+            data = response.json()
+            courses = data.get('courses', [])
+            
+            # Apply server-side filtering
+            filtered_courses = courses
+            
+            # Filter by status
+            status_filter = request.query_params.get('status')
+            if status_filter:
+                filtered_courses = [c for c in filtered_courses if c.get('status') == status_filter]
+            
+            # Filter by action
+            action_filter = request.query_params.get('action')
+            if action_filter:
+                filtered_courses = [c for c in filtered_courses if c.get('action') == action_filter]
+            
+            # Filter by course_size
+            course_size_filter = request.query_params.get('course_size')
+            if course_size_filter:
+                filtered_courses = [c for c in filtered_courses if c.get('course_size') == course_size_filter]
+            
+            # Search in topic and instructions
+            search_query = request.query_params.get('search')
+            if search_query:
+                search_lower = search_query.lower()
+                filtered_courses = [
+                    c for c in filtered_courses 
+                    if search_lower in c.get('topic', '').lower() 
+                    or search_lower in c.get('instructions', '').lower()
+                ]
+            
+            # Apply ordering
+            ordering = request.query_params.get('ordering', '-created_at')
+            reverse = ordering.startswith('-')
+            order_field = ordering.lstrip('-')
+            
+            try:
+                filtered_courses.sort(
+                    key=lambda x: x.get(order_field, ''),
+                    reverse=reverse
+                )
+            except Exception as e:
+                log.warning(f"Could not sort by {order_field}: {e}")
+            
+            # Build response matching original API format
+            response_data = {
+                'courses': filtered_courses,
+                'total': len(filtered_courses)
+            }
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+            
+        except requests.exceptions.Timeout:
+            log.error("External API request timed out")
+            return Response(
+                {"error": "Request to external API timed out"},
+                status=status.HTTP_504_GATEWAY_TIMEOUT
+            )
+        except requests.exceptions.RequestException as e:
+            log.error(f"Error calling external API: {str(e)}")
+            return Response(
+                {"error": f"Failed to connect to external API: {str(e)}"},
+                status=status.HTTP_502_BAD_GATEWAY
+            )
+        except Exception as e:
+            log.error(f"Unexpected error in AICourseListView: {str(e)}")
+            return Response(
+                {"error": f"Internal server error: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+## AI Course Detail View
+@view_auth_classes(is_authenticated=True)
+class AICourseDetailView(APIView):
+    """
+    API endpoint for getting an AI course detail from external AICC API.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, course_id):
+        """Get AI course detail from external AICC API"""
+        try:
+            # Get API key from settings
+            
+            API_KEY = settings.BLENDX_AICC_KEY
+            API_URL = settings.BLENDX_AICC_APP_URL
+            if not API_KEY:
+                return Response(
+                    {"error": "BLENDX_AICC_KEY not configured"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            # Make request to external AICC API
+            external_url = f"{API_URL}/api/v1/courses/{course_id}"
+            headers = {
+                'accept': 'application/json',
+                'X-API-Key': API_KEY
+            }
+            
+            response = requests.get(external_url, headers=headers, timeout=30)
+            
+            # Return the response data directly
+            if response.status_code == 200:
+                return Response(
+                data={
+                    "course": response.json(),
+                    "status": "success"
+                },
+                status=status.HTTP_200_OK
+            )
+            else:
+                return Response(
+                    {"error": f"External API returned status {response.status_code}", "detail": response.text},
+                    status=response.status_code
+                )
+                
+        except requests.exceptions.RequestException as e:
+            log.error(f"Error calling external AICC API: {e}")
+            return Response(
+                {"error": "Failed to fetch course data from external API", "detail": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        except Exception as e:
+            log.error(f"Unexpected error in AICourseDetailView: {e}")
+            return Response(
+                {"error": "Internal server error", "detail": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+## Course Creator Task Status View
+@view_auth_classes(is_authenticated=True)
+class CourseCreatorTaskStatusView(APIView):
+    """
+    API endpoint for getting a course creator task status from external AICC API.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, course_id):
+        """Get course creator task status from external AICC API"""
+        try:
+            # Get API key and URL from settings
+            API_KEY = settings.BLENDX_AICC_KEY
+            API_URL = settings.BLENDX_AICC_APP_URL
+            if not API_KEY:
+                return Response(
+                    {"error": "BLENDX_AICC_KEY not configured"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            # Make request to external AICC API
+            external_url = f"{API_URL}/api/v1/courses/{course_id}"
+            headers = {
+                'accept': 'application/json',
+                'X-API-Key': API_KEY
+            }
+            
+            response = requests.get(external_url, headers=headers, timeout=30)
+            
+            # Return the response data directly
+            if response.status_code == 200:
+                return Response(response.json(), status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {"error": f"External API returned status {response.status_code}", "detail": response.text},
+                    status=response.status_code
+                )
+                
+        except requests.exceptions.RequestException as e:
+            log.error(f"Error calling external AICC API: {e}")
+            return Response(
+                {"error": "Failed to fetch course creator task status from external API", "detail": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        except Exception as e:
+            log.error(f"Unexpected error in CourseCreatorTaskStatusView: {e}")
+            return Response(
+                {"error": "Internal server error", "detail": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
