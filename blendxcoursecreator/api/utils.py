@@ -143,7 +143,10 @@ def get_attachment_url(file_path):
         if hasattr(settings, 'MINIO_BASE_URL'):
             return settings.MINIO_BASE_URL + '/openedx/openedx' + url
         else:
-            return settings.LMS_ROOT_URL + url
+            if "http" in url:
+                return url
+            else:
+                return settings.LMS_ROOT_URL + url
     except Exception as e:
         log.error(f"Error getting attachment URL for {file_path}: {e}")
         return None
