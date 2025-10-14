@@ -86,11 +86,13 @@ class AttachmentView(APIView):
                 user_id=request.user.id
             )
             
+            file_url = get_attachment_url(file_path)
+            
             # Create attachment record
             attachment = Attachment.objects.create(
                 user=request.user,
                 filename=file_info['filename'],
-                file_path=file_path,
+                file_path=file_url,
                 file_size=file_info['file_size'],
                 file_type=file_info['file_type'],
                 file_extension=file_info['file_extension'],
@@ -440,7 +442,7 @@ class CourseCreatorView(APIView):
         try:
             API_KEY = settings.BLENDX_AICC_KEY
             API_URL = settings.BLENDX_AICC_APP_URL
-            MEDIA_URL = settings.LMS_ROOT_URL
+            MEDIA_URL = "https://6cad1254793c.ngrok-free.app"
             user_email = User.objects.get(id=request.user.id).email
             
             # Get request data
@@ -448,16 +450,6 @@ class CourseCreatorView(APIView):
             
             # Add user email to the request data
             request_data['user_email'] = user_email
-            
-            # Transform attachment_paths by prepending MEDIA_URL/media/
-            if 'attachment_paths' in request_data and request_data['attachment_paths']:
-                transformed_paths = []
-                for path in request_data['attachment_paths']:
-                    # Construct full URL: {MEDIA_URL}/media/{filepath}
-                    full_url = f"{MEDIA_URL}/media/{path}"
-                    transformed_paths.append(full_url)
-                request_data['attachment_paths'] = transformed_paths
-                log.info(f"Transformed attachment_paths: {transformed_paths}")
             
             # Prepare headers for external API
             headers = {
@@ -470,7 +462,7 @@ class CourseCreatorView(APIView):
             external_api_url = f"{API_URL}/api/v1/courses/create"
             
             log.info(f"Forwarding request to external API: {external_api_url}")
-            
+            log.info(f"Request data: {request_data}")
             response = requests.post(
                 external_api_url,
                 headers=headers,

@@ -139,13 +139,11 @@ def get_attachment_url(file_path):
     """
     try:
         storage = get_attachment_storage()
-        if hasattr(storage, 'url'):
-            return storage.url(file_path)
+        url = storage.url(file_path)
+        if hasattr(settings, 'MINIO_BASE_URL'):
+            return settings.MINIO_BASE_URL + '/openedx/openedx' + url
         else:
-            # For local storage, construct URL manually
-            if hasattr(settings, 'MEDIA_URL'):
-                return f"{settings.MEDIA_URL}{file_path}"
-            return f"/media/{file_path}"
+            return settings.LMS_ROOT_URL + url
     except Exception as e:
         log.error(f"Error getting attachment URL for {file_path}: {e}")
         return None
