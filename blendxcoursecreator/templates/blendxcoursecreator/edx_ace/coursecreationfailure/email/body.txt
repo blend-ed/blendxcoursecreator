@@ -1,0 +1,20 @@
+{% load i18n %}{% blocktrans with course_topic=course_topic %}❌ Course Creation Failed
+
+We're sorry, but there was an issue creating your AI course for "{{ course_topic }}".
+
+The error details are:
+{{ error_message }}
+
+Don't worry! You can try creating your course again. Here are some suggestions:
+- Check that your topic is clear and specific
+- Try reducing the course size or complexity
+- Ensure you have a stable internet connection
+- Contact support if the issue persists
+
+We apologize for any inconvenience and appreciate your patience.
+
+Try Again: {{ dashboard_url }}
+
+This email was sent by {{ platform_name }}.
+{% if reply_to_email %}For support, contact us at {{ reply_to_email }}{% endif %}
+{% if homepage_url %}{{ homepage_url }}{% endif %}{% endblocktrans %}

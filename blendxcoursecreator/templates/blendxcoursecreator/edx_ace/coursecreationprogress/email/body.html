@@ -1,0 +1,25 @@
+{% extends "blendxcoursecreator/edx_ace/base_body.html" %}
+{% load i18n %}
+
+{% block email_title %}
+{% blocktrans %}⏳ Course Creation in Progress{% endblocktrans %}
+{% endblock %}
+
+{% block email_body %}
+<p>{% blocktrans with course_topic=course_topic %}We're working on creating your AI course for "{{ course_topic }}".{% endblocktrans %}</p>
+
+<div style="background-color: #e7f3ff; border: 1px solid #b3d9ff; color: #0066cc; padding: 15px; border-radius: 4px; margin: 15px 0;">
+    <strong>{% blocktrans %}Current Status:{% endblocktrans %}</strong><br>
+    {{ progress_message }}
+</div>
+
+<p>{% blocktrans %}This process typically takes a few minutes. We'll send you another email once your course is ready.{% endblocktrans %}</p>
+
+<p>{% blocktrans %}Thank you for your patience!{% endblocktrans %}</p>
+{% endblock %}
+
+{% block cta_button %}
+<a href="{{ dashboard_url }}" class="button" style="display: inline-block; padding: 12px 24px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+    {% blocktrans %}Check Dashboard{% endblocktrans %}
+</a>
+{% endblock %}

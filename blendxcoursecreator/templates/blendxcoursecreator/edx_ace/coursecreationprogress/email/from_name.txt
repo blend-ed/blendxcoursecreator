@@ -1,0 +1,1 @@
+{% load i18n %}{% blocktrans %}{{ platform_name }} AI Course Creator{% endblocktrans %}

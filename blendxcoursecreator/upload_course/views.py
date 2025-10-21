@@ -14,6 +14,11 @@ from django.conf import settings
 from django.contrib.auth.models import User
 import json
 from .utils import import_course_from_path
+from blendxcoursecreator.email_utils import (
+    send_course_creation_success_email,
+    send_course_creation_failure_email,
+    send_course_creation_progress_email
+)
 
 log = logging.getLogger(__name__)
 from django.conf import settings
@@ -124,28 +129,74 @@ class UploadCourseView(APIView):
             except User.MultipleObjectsReturned:
                 return Response(status=status.HTTP_400_BAD_REQUEST, data={"error": f"Multiple users found with email: {user_email}. Provide a unique email."})
 
-            created_course = create_new_course(
-                user=user,
-                org=str(org),
-                number=str(number),
-                run=str(run),
-                fields={},
-            )
+            # Send progress email notification
+            try:
+                send_course_creation_progress_email(
+                    user_email=user.email,
+                    course_topic=f"Course {number}",
+                    progress_message="Starting course import process...",
+                    user_id=user.id,
+                    language='en',
+                    org_name=org
+                )
+                log.info(f"Sent course creation progress email to {user.email}")
+            except Exception as email_error:
+                log.error(f"Failed to send course creation progress email: {email_error}")
 
-            log.info(f"Created course: %s", created_course)
+            try:
+                created_course = create_new_course(
+                    user=user,
+                    org=str(org),
+                    number=str(number),
+                    run=str(run),
+                    fields={},
+                )
 
-            course_key = f"course-v1:{org}+{number}+{run}"
-            import_course_from_path(int(user.id), course_key, output_path, 'en')
+                log.info(f"Created course: %s", created_course)
 
-            course_url = f"{settings.LMS_ROOT_URL}/courses/{course_key}/course/"
+                course_key = f"course-v1:{org}+{number}+{run}"
+                import_course_from_path(int(user.id), course_key, output_path, 'en')
 
-            return Response(
-                status=status.HTTP_200_OK,
-                data={
-                    "course_url": course_url,
-                    "course_key": course_key,
-                },
-            )
+                course_url = f"{settings.LMS_ROOT_URL}/courses/{course_key}/course/"
+
+                # Send success email notification
+                try:
+                    send_course_creation_success_email(
+                        user_email=user.email,
+                        course_key=course_key,
+                        course_name=f"Course {number}",
+                        user_id=user.id,
+                        language='en',
+                        org_name=org
+                    )
+                    log.info(f"Sent course creation success email to {user.email}")
+                except Exception as email_error:
+                    log.error(f"Failed to send course creation success email: {email_error}")
+
+                return Response(
+                    status=status.HTTP_200_OK,
+                    data={
+                        "course_url": course_url,
+                        "course_key": course_key,
+                    },
+                )
+                
+            except Exception as course_error:
+                # Send failure email notification
+                try:
+                    send_course_creation_failure_email(
+                        user_email=user.email,
+                        course_topic=f"Course {number}",
+                        error_message=str(course_error),
+                        user_id=user.id,
+                        language='en',
+                        org_name=org
+                    )
+                    log.info(f"Sent course creation failure email to {user.email}")
+                except Exception as email_error:
+                    log.error(f"Failed to send course creation failure email: {email_error}")
+                
+                raise course_error
 
         except Exception as e:
             log.error(f"Error occurred while importing course: {e}")

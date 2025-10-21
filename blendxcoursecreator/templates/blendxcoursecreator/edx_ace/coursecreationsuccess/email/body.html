@@ -1,0 +1,26 @@
+{% extends "blendxcoursecreator/edx_ace/base_body.html" %}
+{% load i18n %}
+
+{% block email_title %}
+{% blocktrans %}🎉 Your AI Course is Ready!{% endblocktrans %}
+{% endblock %}
+
+{% block email_body %}
+<p>{% blocktrans with course_name=course_name %}Great news! Your AI-generated course "{{ course_name }}" has been successfully created and is now available for you to explore.{% endblocktrans %}</p>
+
+<p>{% blocktrans %}The course includes:{% endblocktrans %}</p>
+<ul>
+    <li>{% blocktrans %}Comprehensive course structure with sections and units{% endblocktrans %}</li>
+    <li>{% blocktrans %}Interactive content including videos, quizzes, and exercises{% endblocktrans %}</li>
+    <li>{% blocktrans %}AI-generated images and multimedia content{% endblocktrans %}</li>
+    <li>{% blocktrans %}Assessment questions and problem sets{% endblocktrans %}</li>
+</ul>
+
+<p>{% blocktrans %}You can now access your course and start customizing it to meet your specific needs.{% endblocktrans %}</p>
+{% endblock %}
+
+{% block cta_button %}
+<a href="{{ course_url }}" class="button" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+    {% blocktrans %}View Your Course{% endblocktrans %}
+</a>
+{% endblock %}

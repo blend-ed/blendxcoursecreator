@@ -1,0 +1,1 @@
+{% load i18n %}{% blocktrans with course_topic=course_topic %}❌ Course Creation Failed for "{{ course_topic }}"{% endblocktrans %}

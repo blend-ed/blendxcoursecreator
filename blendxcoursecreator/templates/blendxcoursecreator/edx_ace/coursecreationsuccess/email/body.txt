@@ -1,0 +1,17 @@
+{% load i18n %}{% blocktrans with course_name=course_name %}🎉 Your AI Course is Ready!
+
+Great news! Your AI-generated course "{{ course_name }}" has been successfully created and is now available for you to explore.
+
+The course includes:
+- Comprehensive course structure with sections and units
+- Interactive content including videos, quizzes, and exercises
+- AI-generated images and multimedia content
+- Assessment questions and problem sets
+
+You can now access your course and start customizing it to meet your specific needs.
+
+View Your Course: {{ course_url }}
+
+This email was sent by {{ platform_name }}.
+{% if reply_to_email %}For support, contact us at {{ reply_to_email }}{% endif %}
+{% if homepage_url %}{{ homepage_url }}{% endif %}{% endblocktrans %}

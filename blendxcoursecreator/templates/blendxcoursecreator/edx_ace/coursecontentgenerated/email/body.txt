@@ -1,0 +1,18 @@
+{% load i18n %}{% blocktrans with course_name=course_name %}🎬 Course Content Generated
+
+Excellent! The content for your course "{{ course_name }}" has been successfully generated.
+
+Your course now includes:
+- Rich HTML content with explanations and examples
+- Video descriptions and transcripts
+- Interactive quizzes and assessments
+- AI-generated images and visual aids
+- Problem sets and exercises
+
+The course is now ready for you to review, customize, and publish. You can make any adjustments you'd like before making it available to learners.
+
+Review Your Course: {{ course_url }}
+
+This email was sent by {{ platform_name }}.
+{% if reply_to_email %}For support, contact us at {{ reply_to_email }}{% endif %}
+{% if homepage_url %}{{ homepage_url }}{% endif %}{% endblocktrans %}

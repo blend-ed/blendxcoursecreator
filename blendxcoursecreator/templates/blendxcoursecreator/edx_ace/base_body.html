@@ -1,0 +1,42 @@
+{% extends "edx_ace/common/base_body.html" %}
+{% load i18n %}
+{% load django_markup %}
+
+{% block content %}
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 30px;">
+        <img src="{{ BLENDX_LOGO_URL|default:'https://blend-ed.com/logo.png' }}" alt="{{ platform_name }}" style="max-width: 200px; height: auto;">
+    </div>
+    
+    <!-- Main Content -->
+    <div style="background-color: #f8f9fa; padding: 30px; border-radius: 8px; margin-bottom: 20px;">
+        {% block email_content %}
+        <h2 style="color: #333; margin-bottom: 20px;">{% block email_title %}{% endblock %}</h2>
+        <div style="color: #666; line-height: 1.6;">
+            {% block email_body %}{% endblock %}
+        </div>
+        {% endblock %}
+    </div>
+    
+    <!-- Call to Action -->
+    {% block call_to_action %}
+    <div style="text-align: center; margin: 30px 0;">
+        {% block cta_button %}{% endblock %}
+    </div>
+    {% endblock %}
+    
+    <!-- Footer -->
+    <div style="text-align: center; color: #999; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+        <p>
+            {% blocktrans %}This email was sent by {{ platform_name }}.{% endblocktrans %}<br>
+            {% if reply_to_email %}
+            {% blocktrans %}For support, contact us at {{ reply_to_email }}{% endblocktrans %}<br>
+            {% endif %}
+            {% if homepage_url %}
+            <a href="{{ homepage_url }}" style="color: #007bff;">{{ homepage_url }}</a>
+            {% endif %}
+        </p>
+    </div>
+</div>
+{% endblock %}

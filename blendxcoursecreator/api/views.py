@@ -26,6 +26,10 @@ from blendxcoursecreator.api.utils import (
     validate_file_type,
     get_supported_file_types
 )
+from blendxcoursecreator.email_utils import (
+    send_course_creation_progress_email,
+    send_course_creation_failure_email
+)
 from django.contrib.auth.models import User
 log = logging.getLogger(__name__)
 # Attachment Views
@@ -442,7 +446,7 @@ class CourseCreatorView(APIView):
         try:
             API_KEY = settings.BLENDX_AICC_KEY
             API_URL = settings.BLENDX_AICC_APP_URL
-            MEDIA_URL = "https://6cad1254793c.ngrok-free.app"
+            
             user_email = User.objects.get(id=request.user.id).email
             
             # Get request data
@@ -450,6 +454,21 @@ class CourseCreatorView(APIView):
             
             # Add user email to the request data
             request_data['user_email'] = user_email
+            
+            # Send progress email notification
+            try:
+                topic = request_data.get('topic', 'AI Course')
+                send_course_creation_progress_email(
+                    user_email=user_email,
+                    course_topic=topic,
+                    progress_message="Starting AI course creation process...",
+                    user_id=request.user.id,
+                    language=request_data.get('target_language', 'en'),
+                    org_name=request_data.get('org', 'AI')
+                )
+                log.info(f"Sent course creation progress email to {user_email}")
+            except Exception as email_error:
+                log.error(f"Failed to send course creation progress email: {email_error}")
             
             # Prepare headers for external API
             headers = {
@@ -470,6 +489,24 @@ class CourseCreatorView(APIView):
                 timeout=300  # 5 minutes timeout for AI operations
             )
             
+            # Check if the response indicates success or failure
+            if response.status_code >= 400:
+                # Send failure email notification
+                try:
+                    topic = request_data.get('topic', 'AI Course')
+                    error_message = response.json().get('error', 'Unknown error occurred') if response.content else 'Request failed'
+                    send_course_creation_failure_email(
+                        user_email=user_email,
+                        course_topic=topic,
+                        error_message=error_message,
+                        user_id=request.user.id,
+                        language=request_data.get('target_language', 'en'),
+                        org_name=request_data.get('org', 'AI')
+                    )
+                    log.info(f"Sent course creation failure email to {user_email}")
+                except Exception as email_error:
+                    log.error(f"Failed to send course creation failure email: {email_error}")
+            
             # Return the response from external API
             return Response(
                 response.json() if response.content else {},
@@ -484,18 +521,66 @@ class CourseCreatorView(APIView):
             )
         except requests.exceptions.Timeout:
             log.error("External API request timed out")
+            # Send failure email notification for timeout
+            try:
+                user_email = User.objects.get(id=request.user.id).email
+                topic = request.data.get('topic', 'AI Course')
+                send_course_creation_failure_email(
+                    user_email=user_email,
+                    course_topic=topic,
+                    error_message="Request to external API timed out",
+                    user_id=request.user.id,
+                    language=request.data.get('target_language', 'en'),
+                    org_name=request.data.get('org', 'AI')
+                )
+                log.info(f"Sent course creation failure email to {user_email}")
+            except Exception as email_error:
+                log.error(f"Failed to send course creation failure email: {email_error}")
+            
             return Response(
                 {"error": "Request to external API timed out"},
                 status=status.HTTP_504_GATEWAY_TIMEOUT
             )
         except requests.exceptions.RequestException as e:
             log.error(f"Error calling external API: {str(e)}")
+            # Send failure email notification for request exception
+            try:
+                user_email = User.objects.get(id=request.user.id).email
+                topic = request.data.get('topic', 'AI Course')
+                send_course_creation_failure_email(
+                    user_email=user_email,
+                    course_topic=topic,
+                    error_message=f"Failed to connect to external API: {str(e)}",
+                    user_id=request.user.id,
+                    language=request.data.get('target_language', 'en'),
+                    org_name=request.data.get('org', 'AI')
+                )
+                log.info(f"Sent course creation failure email to {user_email}")
+            except Exception as email_error:
+                log.error(f"Failed to send course creation failure email: {email_error}")
+            
             return Response(
                 {"error": f"Failed to connect to external API: {str(e)}"},
                 status=status.HTTP_502_BAD_GATEWAY
             )
         except Exception as e:
             log.error(f"Unexpected error in CourseCreatorView: {str(e)}")
+            # Send failure email notification for unexpected error
+            try:
+                user_email = User.objects.get(id=request.user.id).email
+                topic = request.data.get('topic', 'AI Course')
+                send_course_creation_failure_email(
+                    user_email=user_email,
+                    course_topic=topic,
+                    error_message=f"Internal server error: {str(e)}",
+                    user_id=request.user.id,
+                    language=request.data.get('target_language', 'en'),
+                    org_name=request.data.get('org', 'AI')
+                )
+                log.info(f"Sent course creation failure email to {user_email}")
+            except Exception as email_error:
+                log.error(f"Failed to send course creation failure email: {email_error}")
+            
             return Response(
                 {"error": f"Internal server error: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
