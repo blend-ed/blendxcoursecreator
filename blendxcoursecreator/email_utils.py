@@ -266,6 +266,12 @@ def _send_email(
                 request_user = User.objects.get(id=user_id)
             except User.DoesNotExist:
                 log.warning(f"User with ID {user_id} not found, using blendxadmin")
+
+        # Get the email logo 
+        if hasattr(settings, 'DEFAULT_EMAIL_LOGO_URL'):
+            param_dict['EMAIL_LOGO_URL'] = settings.DEFAULT_EMAIL_LOGO_URL
+        else:
+            param_dict['EMAIL_LOGO_URL'] = ''
         
         with emulate_http_request(site=Site.objects.get(id=settings.SITE_ID), user=request_user):
             ace.send(message)
