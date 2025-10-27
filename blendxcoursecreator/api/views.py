@@ -10,6 +10,10 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from openedx.core.lib.api.view_utils import view_auth_classes
 
+from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
+from edx_rest_framework_extensions.auth.session.authentication import SessionAuthenticationAllowInactiveUser
+from openedx.core.lib.api.authentication import BearerAuthenticationAllowInactiveUser
+
 from edx_api_doc_tools import schema
 from drf_yasg import openapi
 from blendxcoursecreator.models import Attachment
@@ -29,12 +33,17 @@ from blendxcoursecreator.api.utils import (
 from django.contrib.auth.models import User
 log = logging.getLogger(__name__)
 # Attachment Views
-@view_auth_classes(is_authenticated=True)
+
 class AttachmentView(APIView):
     """
     API endpoint for managing attachments (upload, list, get, delete).
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    authentication_classes = (
+        JwtAuthentication,
+        BearerAuthenticationAllowInactiveUser,
+        SessionAuthenticationAllowInactiveUser,
+    )
     
     @schema(
         body=openapi.Schema(
@@ -158,12 +167,17 @@ class AttachmentView(APIView):
             )
 
 
-@view_auth_classes(is_authenticated=True)
+
 class AttachmentDetailView(APIView):
     """
     API endpoint for individual attachment operations (get, update, delete).
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    authentication_classes = (
+        JwtAuthentication,
+        BearerAuthenticationAllowInactiveUser,
+        SessionAuthenticationAllowInactiveUser,
+    )
     
     def get_object(self, pk, user):
         """Get attachment object or return 404"""
@@ -298,12 +312,17 @@ class AttachmentDetailView(APIView):
             )
 
 
-@view_auth_classes(is_authenticated=True)
+
 class AttachmentBulkDeleteView(APIView):
     """
     API endpoint for bulk deletion of attachments.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    authentication_classes = (
+        JwtAuthentication,
+        BearerAuthenticationAllowInactiveUser,
+        SessionAuthenticationAllowInactiveUser,
+    )
     
     @schema(
         body=openapi.Schema(
@@ -385,7 +404,7 @@ class AttachmentBulkDeleteView(APIView):
 
 
 ## Course Creator View
-@view_auth_classes(is_authenticated=True)
+
 class CourseCreatorView(APIView):
     """
     API endpoint for course creator.
@@ -502,12 +521,17 @@ class CourseCreatorView(APIView):
             )
 
 ## AI Course List View
-@view_auth_classes(is_authenticated=True)
+
 class AICourseListView(APIView):
     """
     API endpoint for listing AI courses.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    authentication_classes = (
+        JwtAuthentication,
+        BearerAuthenticationAllowInactiveUser,
+        SessionAuthenticationAllowInactiveUser,
+    )
     
     @schema(
         parameters=[
@@ -701,7 +725,7 @@ class AICourseListView(APIView):
             )
             
 ## AI Course Detail View
-@view_auth_classes(is_authenticated=True)
+
 class AICourseDetailView(APIView):
     """
     API endpoint for getting an AI course detail from external AICC API.
@@ -759,7 +783,7 @@ class AICourseDetailView(APIView):
             )
             
 ## Course Creator Task Status View
-@view_auth_classes(is_authenticated=True)
+
 class CourseCreatorTaskStatusView(APIView):
     """
     API endpoint for getting a course creator task status from external AICC API.
