@@ -7,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from openedx.core.lib.api.view_utils import view_auth_classes
 
 from edx_api_doc_tools import schema
@@ -390,7 +390,7 @@ class CourseCreatorView(APIView):
     """
     API endpoint for course creator.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
     
     @schema(
         body=openapi.Schema(
@@ -706,7 +706,7 @@ class AICourseDetailView(APIView):
     """
     API endpoint for getting an AI course detail from external AICC API.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
     
     def get(self, request, course_id):
         """Get AI course detail from external AICC API"""
@@ -764,7 +764,7 @@ class CourseCreatorTaskStatusView(APIView):
     """
     API endpoint for getting a course creator task status from external AICC API.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
     
     def get(self, request, course_id):
         """Get course creator task status from external AICC API"""
