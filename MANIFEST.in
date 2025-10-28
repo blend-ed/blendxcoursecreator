@@ -4,3 +4,4 @@ include README.rst
 include requirements/base.in
 include requirements/constraints.txt
 recursive-include blendxcoursecreator *.html *.png *.gif *.js *.css *.jpg *.jpeg *.svg
+recursive-include blendxcoursecreator/templates *.html *.txt

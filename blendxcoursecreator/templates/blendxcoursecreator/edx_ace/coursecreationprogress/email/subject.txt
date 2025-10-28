@@ -1,0 +1,1 @@
+{% load i18n %}{% blocktrans with course_topic=course_topic %}⏳ Creating Your Course: "{{ course_topic }}"{% endblocktrans %}

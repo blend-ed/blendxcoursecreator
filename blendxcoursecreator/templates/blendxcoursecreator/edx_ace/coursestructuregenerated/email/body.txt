@@ -1,0 +1,21 @@
+{% load i18n %}{% blocktrans with course_topic=course_topic %}📋 Course Structure Generated
+
+Great! We've successfully generated the course structure for "{{ course_topic }}".
+
+The AI has created a comprehensive course outline that includes:
+- Well-organized sections and subsections
+- Learning units with clear objectives
+- Logical progression of topics
+- Assessment points and activities
+
+Next, we'll start generating the actual course content including videos, quizzes, and interactive materials. This process may take a few minutes.
+
+You'll receive another email once the content generation is complete.
+
+View Progress: {{ dashboard_url }}
+
+This email was sent by {{ platform_name }}.{% endblocktrans %}
+{% if reply_to_email %}
+{% blocktrans with reply_to_email=reply_to_email %}For support, contact us at {{ reply_to_email }}{% endblocktrans %}
+{% endif %}
+{% if homepage_url %}{{ homepage_url }}{% endif %}

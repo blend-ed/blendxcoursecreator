@@ -1,0 +1,1 @@
+{% load i18n %}{% blocktrans with course_name=course_name %}🎬 Course Content Generated for "{{ course_name }}"{% endblocktrans %}

@@ -1,0 +1,27 @@
+{% extends "blendxcoursecreator/edx_ace/base_body.html" %}
+{% load i18n %}
+
+{% block email_title %}
+{% blocktrans %}🎬 Course Content Generated{% endblocktrans %}
+{% endblock %}
+
+{% block email_body %}
+<p>{% blocktrans with course_name=course_name %}Excellent! The content for your course "{{ course_name }}" has been successfully generated.{% endblocktrans %}</p>
+
+<p>{% blocktrans %}Your course now includes:{% endblocktrans %}</p>
+<ul>
+    <li>{% blocktrans %}Rich HTML content with explanations and examples{% endblocktrans %}</li>
+    <li>{% blocktrans %}Video descriptions and transcripts{% endblocktrans %}</li>
+    <li>{% blocktrans %}Interactive quizzes and assessments{% endblocktrans %}</li>
+    <li>{% blocktrans %}AI-generated images and visual aids{% endblocktrans %}</li>
+    <li>{% blocktrans %}Problem sets and exercises{% endblocktrans %}</li>
+</ul>
+
+<p>{% blocktrans %}The course is now ready for you to review, customize, and publish. You can make any adjustments you'd like before making it available to learners.{% endblocktrans %}</p>
+{% endblock %}
+
+{% block cta_button %}
+<a href="{{ course_url }}" class="button" style="display: inline-block; padding: 12px 24px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+    {% blocktrans %}Review Your Course{% endblocktrans %}
+</a>
+{% endblock %}

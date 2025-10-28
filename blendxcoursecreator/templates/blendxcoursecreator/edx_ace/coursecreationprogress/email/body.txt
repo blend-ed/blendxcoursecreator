@@ -1,0 +1,18 @@
+{% load i18n %}{% blocktrans with course_topic=course_topic %}⏳ Course Creation in Progress
+
+We're working on creating your AI course for "{{ course_topic }}".
+
+Current Status:
+{{ progress_message }}
+
+This process typically takes a few minutes. We'll send you another email once your course is ready.
+
+Thank you for your patience!
+
+Check Dashboard: {{ dashboard_url }}
+
+This email was sent by {{ platform_name }}.{% endblocktrans %}
+{% if reply_to_email %}
+{% blocktrans with reply_to_email=reply_to_email %}For support, contact us at {{ reply_to_email }}{% endblocktrans %}
+{% endif %}
+{% if homepage_url %}{{ homepage_url }}{% endif %}

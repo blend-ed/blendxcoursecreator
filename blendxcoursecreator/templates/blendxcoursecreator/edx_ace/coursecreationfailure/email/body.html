@@ -1,0 +1,31 @@
+{% extends "blendxcoursecreator/edx_ace/base_body.html" %}
+{% load i18n %}
+
+{% block email_title %}
+{% blocktrans %}❌ Course Creation Failed{% endblocktrans %}
+{% endblock %}
+
+{% block email_body %}
+<p>{% blocktrans with course_topic=course_topic %}We're sorry, but there was an issue creating your AI course for "{{ course_topic }}".{% endblocktrans %}</p>
+
+<p>{% blocktrans %}The error details are:{% endblocktrans %}</p>
+<div style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 4px; margin: 15px 0;">
+    {{ error_message }}
+</div>
+
+<p>{% blocktrans %}Don't worry! You can try creating your course again. Here are some suggestions:{% endblocktrans %}</p>
+<ul>
+    <li>{% blocktrans %}Check that your topic is clear and specific{% endblocktrans %}</li>
+    <li>{% blocktrans %}Try reducing the course size or complexity{% endblocktrans %}</li>
+    <li>{% blocktrans %}Ensure you have a stable internet connection{% endblocktrans %}</li>
+    <li>{% blocktrans %}Contact support if the issue persists{% endblocktrans %}</li>
+</ul>
+
+<p>{% blocktrans %}We apologize for any inconvenience and appreciate your patience.{% endblocktrans %}</p>
+{% endblock %}
+
+{% block cta_button %}
+<a href="{{ dashboard_url }}" class="button" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+    {% blocktrans %}Try Again{% endblocktrans %}
+</a>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "blendxcoursecreator/edx_ace/base_body.html" %}
+{% load i18n %}
+
+{% block email_title %}
+{% blocktrans %}📋 Course Structure Generated{% endblocktrans %}
+{% endblock %}
+
+{% block email_body %}
+<p>{% blocktrans with course_topic=course_topic %}Great! We've successfully generated the course structure for "{{ course_topic }}".{% endblocktrans %}</p>
+
+<p>{% blocktrans %}The AI has created a comprehensive course outline that includes:{% endblocktrans %}</p>
+<ul>
+    <li>{% blocktrans %}Well-organized sections and subsections{% endblocktrans %}</li>
+    <li>{% blocktrans %}Learning units with clear objectives{% endblocktrans %}</li>
+    <li>{% blocktrans %}Logical progression of topics{% endblocktrans %}</li>
+    <li>{% blocktrans %}Assessment points and activities{% endblocktrans %}</li>
+</ul>
+
+<p>{% blocktrans %}Next, we'll start generating the actual course content including videos, quizzes, and interactive materials. This process may take a few minutes.{% endblocktrans %}</p>
+
+<p>{% blocktrans %}You'll receive another email once the content generation is complete.{% endblocktrans %}</p>
+{% endblock %}
+
+{% block cta_button %}
+<a href="{{ dashboard_url }}" class="button" style="display: inline-block; padding: 12px 24px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+    {% blocktrans %}View Progress{% endblocktrans %}
+</a>
+{% endblock %}
